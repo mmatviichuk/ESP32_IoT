@@ -1,4 +1,3 @@
-
 #include "FS.h"
 #include "SD.h"
 #include "SPI.h"
@@ -219,33 +218,31 @@ void setup(){
       Serial.print(".");
   }
   Serial.println(" CONNECTED");
-
-
   
-    if(!SD.begin(SD_CS)){
-        Serial.println("Card Mount Failed");
-        return;
-    }
-    uint8_t cardType = SD.cardType();
+  if(!SD.begin(SD_CS)){
+      Serial.println("Card Mount Failed");
+      return;
+  }
+  uint8_t cardType = SD.cardType();
 
-    if(cardType == CARD_NONE){
-        Serial.println("No SD card attached");
-        return;
-    }
+  if(cardType == CARD_NONE){
+      Serial.println("No SD card attached");
+      return;
+  }
 
-    Serial.print("SD Card Type: ");
-    if(cardType == CARD_MMC){
-        Serial.println("MMC");
-    } else if(cardType == CARD_SD){
-        Serial.println("SDSC");
-    } else if(cardType == CARD_SDHC){
-        Serial.println("SDHC");
-    } else {
-        Serial.println("UNKNOWN");
-    }
+  Serial.print("SD Card Type: ");
+  if(cardType == CARD_MMC){
+      Serial.println("MMC");
+  } else if(cardType == CARD_SD){
+      Serial.println("SDSC");
+  } else if(cardType == CARD_SDHC){
+      Serial.println("SDHC");
+  } else {
+      Serial.println("UNKNOWN");
+  }
 
-    uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-    Serial.printf("SD Card Size: %lluMB\n", cardSize);
+  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
+  Serial.printf("SD Card Size: %lluMB\n", cardSize);
     
   //init and get the time
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
@@ -269,12 +266,12 @@ void setup(){
   GetTime();
   PayloadMessage();
   
-    //listDir(SD, "/", 2);
+  //listDir(SD, "/", 2);
     
-    appendFile(SD, "/data.txt", dataMessage.c_str());
-    //readFile(SD, "/data.txt");
-    Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
-    Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));/**/
+  appendFile(SD, "/data.txt", dataMessage.c_str());
+  //readFile(SD, "/data.txt");
+  Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
+  Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));/**/
 
   //disconnect WiFi as it's no longer needed
   WiFi.disconnect(true);
