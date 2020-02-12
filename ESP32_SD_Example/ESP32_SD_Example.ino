@@ -3,28 +3,64 @@
 #include "SPI.h"
 #include "DHT.h"
 #include <WiFi.h>
+#include <ArduinoJson.h>
 #include "time.h"
 
 #define DHTTYPE DHT11   // DHT 11
-
 #define SD_CS 5
 
-const char* ssid       = "****";
-const char* password   = "****";
+
+struct Config {
+  char ssid[64];
+  char pswd[64];
+};
+
+const char* filename = "/wifi.ini";
 
 const char* ntpServer = "pool.ntp.org";
 const long  gmtOffset_sec = 14400;
 const int   daylightOffset_sec = 3600;
 
+int ledPin = 2;
 float Temperature;
 float Humidity;
 String dataMessage;
 char Time [80];
 
+Config config; 
+
 uint8_t DHTPin = 4;
 
 // Initialize DHT sensor.
-DHT dht(DHTPin, DHTTYPE);                
+DHT dht(DHTPin, DHTTYPE);
+
+// Loads the configuration from a file
+void loadWiFiConfiguration(const char *filename, Config &config) {
+  // Open file for reading
+  File file = SD.open(filename);
+
+  // Allocate a temporary JsonDocument
+  // Don't forget to change the capacity to match your requirements.
+  // Use arduinojson.org/v6/assistant to compute the capacity.
+  StaticJsonDocument<512> doc;
+
+  // Deserialize the JSON document
+  DeserializationError error = deserializeJson(doc, file);
+  if (error)
+    Serial.println(F("Failed to read file, using default configuration"));
+
+  // Copy values from the JsonDocument to the Config
+  strlcpy(config.ssid,                  // <- destination
+          doc["ssid"] | "WIFI_SSID",  // <- source
+          sizeof(config.ssid));         // <- destination's capacity
+  //config.port = doc["port"] | 2731;
+  strlcpy(config.pswd,                  // <- destination
+          doc["pswd"] | "WIFI_PASSWD",  // <- source
+          sizeof(config.pswd));         // <- destination's capacity
+
+  // Close the file (Curiously, File's destructor doesn't close the file)
+  file.close();
+}
 
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
     Serial.printf("Listing directory: %s\n", dirname);
@@ -109,16 +145,19 @@ void writeFile(fs::FS &fs, const char * path, const char * message){
 
 void appendFile(fs::FS &fs, const char * path, const char * message){
     Serial.printf("Appending to file: %s\n", path);
-
+    digitalWrite(ledPin, HIGH);
     File file = fs.open(path, FILE_APPEND);
     if(!file){
         Serial.println("Failed to open file for appending");
+        digitalWrite(ledPin, LOW);
         return;
     }
     if(file.print(message)){
         Serial.println("Message appended");
+        digitalWrite(ledPin, LOW);
     } else {
         Serial.println("Append failed");
+        digitalWrite(ledPin, LOW);
     }
     file.close();
 }
@@ -190,7 +229,7 @@ void GetTime()
     Serial.println("Failed to obtain time");
     return;
   }
-  Serial.println(&timeinfo, "%Y %m %d %H:%M:%S");
+  Serial.println(&timeinfo, "%Y%m%d %H:%M:%S");
   strftime (Time,80,"%Y%m%d %H:%M:%S",&timeinfo);
 }
 
@@ -208,16 +247,9 @@ void PayloadMessage() {
 void setup(){
   Serial.begin(115200);
   
-  delay(100);
+  pinMode(ledPin, OUTPUT);
   
-  //connect to WiFi
-  Serial.printf("Connecting to %s ", ssid);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
-      Serial.print(".");
-  }
-  Serial.println(" CONNECTED");
+  delay(100);
   
   if(!SD.begin(SD_CS)){
       Serial.println("Card Mount Failed");
@@ -241,6 +273,19 @@ void setup(){
       Serial.println("UNKNOWN");
   }
 
+  // Should load default config if run for the first time
+  Serial.println(F("Loading configuration..."));
+  loadWiFiConfiguration(filename, config);
+
+  //connect to WiFi
+  Serial.printf("Connecting to %s ", config.ssid);
+  WiFi.begin(config.ssid, config.pswd);
+  while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
+      Serial.print(".");
+  }
+  Serial.println(" CONNECTED");
+  
   uint64_t cardSize = SD.cardSize() / (1024 * 1024);
   Serial.printf("SD Card Size: %lluMB\n", cardSize);
     
