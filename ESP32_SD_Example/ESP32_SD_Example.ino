@@ -9,13 +9,11 @@
 #define DHTTYPE DHT11   // DHT 11
 #define SD_CS 5
 
+
 struct Config {
   char ssid[64];
-  int pwsd;
+  char pswd[64];
 };
-
-const char* ssid       = "****";
-const char* password   = "****";
 
 const char* filename = "/wifi.ini";
 
@@ -23,6 +21,7 @@ const char* ntpServer = "pool.ntp.org";
 const long  gmtOffset_sec = 14400;
 const int   daylightOffset_sec = 3600;
 
+int ledPin = 2;
 float Temperature;
 float Humidity;
 String dataMessage;
@@ -36,7 +35,7 @@ uint8_t DHTPin = 4;
 DHT dht(DHTPin, DHTTYPE);
 
 // Loads the configuration from a file
-void loadConfiguration(const char *filename, Config &config) {
+void loadWiFiConfiguration(const char *filename, Config &config) {
   // Open file for reading
   File file = SD.open(filename);
 
@@ -55,9 +54,9 @@ void loadConfiguration(const char *filename, Config &config) {
           doc["ssid"] | "WIFI_SSID",  // <- source
           sizeof(config.ssid));         // <- destination's capacity
   //config.port = doc["port"] | 2731;
-  strlcpy(config.pwsd,                  // <- destination
-          doc["pwsd"] | "WIFI_PASSWD",  // <- source
-          sizeof(config.pwsd));         // <- destination's capacity
+  strlcpy(config.pswd,                  // <- destination
+          doc["pswd"] | "WIFI_PASSWD",  // <- source
+          sizeof(config.pswd));         // <- destination's capacity
 
   // Close the file (Curiously, File's destructor doesn't close the file)
   file.close();
@@ -146,16 +145,19 @@ void writeFile(fs::FS &fs, const char * path, const char * message){
 
 void appendFile(fs::FS &fs, const char * path, const char * message){
     Serial.printf("Appending to file: %s\n", path);
-
+    digitalWrite(ledPin, HIGH);
     File file = fs.open(path, FILE_APPEND);
     if(!file){
         Serial.println("Failed to open file for appending");
+        digitalWrite(ledPin, LOW);
         return;
     }
     if(file.print(message)){
         Serial.println("Message appended");
+        digitalWrite(ledPin, LOW);
     } else {
         Serial.println("Append failed");
+        digitalWrite(ledPin, LOW);
     }
     file.close();
 }
@@ -227,7 +229,7 @@ void GetTime()
     Serial.println("Failed to obtain time");
     return;
   }
-  Serial.println(&timeinfo, "%Y %m %d %H:%M:%S");
+  Serial.println(&timeinfo, "%Y%m%d %H:%M:%S");
   strftime (Time,80,"%Y%m%d %H:%M:%S",&timeinfo);
 }
 
@@ -244,6 +246,8 @@ void PayloadMessage() {
 
 void setup(){
   Serial.begin(115200);
+  
+  pinMode(ledPin, OUTPUT);
   
   delay(100);
   
@@ -271,11 +275,11 @@ void setup(){
 
   // Should load default config if run for the first time
   Serial.println(F("Loading configuration..."));
-  loadConfiguration(filename, config);
+  loadWiFiConfiguration(filename, config);
 
   //connect to WiFi
   Serial.printf("Connecting to %s ", config.ssid);
-  WiFi.begin(config.ssid, config.pwsd);
+  WiFi.begin(config.ssid, config.pswd);
   while (WiFi.status() != WL_CONNECTED) {
       delay(500);
       Serial.print(".");
