@@ -1,5 +1,5 @@
 void loop() {
-  delay(5000);
+  delay(REPEAT_CHECK);
   getSensorData();
   getTime();
   payloadMessage();

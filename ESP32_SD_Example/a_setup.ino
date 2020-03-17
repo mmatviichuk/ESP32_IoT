@@ -42,10 +42,10 @@ void setup() {
   Serial.println(F("Loading configuration..."));
   DEBUG("");
   loadWiFiCoaanfiguration(filename, config);
-
+  
   //connect to WiFi
-  Serial.printf("Connecting to %s ", config.ssid);
-  DEBUG("");
+  //Serial.printf("Connecting to %s ", config.ssid);
+  DEBUG("Connecting to "+ String(config.ssid));
   WiFi.begin(config.ssid, config.pswd);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);

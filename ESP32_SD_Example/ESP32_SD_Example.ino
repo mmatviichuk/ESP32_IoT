@@ -3,6 +3,8 @@
 
 #define DEBUG_SERIAL 1 
 
+#define REPEAT_CHECK 20000
+
 #include "FS.h"
 #include "SD.h"
 #include "SPI.h"
