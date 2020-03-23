@@ -42,26 +42,15 @@ void setup() {
   Serial.println(F("Loading configuration..."));
   DEBUG("");
   loadWiFiCoaanfiguration(filename, config);
-  
-  //connect to WiFi
-  //Serial.printf("Connecting to %s ", config.ssid);
-  DEBUG("Connecting to "+ String(config.ssid));
-  WiFi.begin(config.ssid, config.pswd);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-    DEBUG("");
-  }
-  Serial.println(" CONNECTED");
-  DEBUG("");
 
+  wifiConnect(config);
+ 
   uint64_t cardSize = SD.cardSize() / (1024 * 1024);
   Serial.printf("SD Card Size: %lluMB\n", cardSize);
   DEBUG("");
 
   //init and get the time
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-
 
   File file = SD.open("/data.txt");
   if (!file) {
@@ -87,13 +76,15 @@ void setup() {
   //listDir(SD, "/", 2);
 
   appendFile(SD, "/data.txt", dataMessage.c_str());
+
+  postData();
+  
   //readFile(SD, "/data.txt");
   Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
   DEBUG("");
   Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
   DEBUG("");/**/
 
-  //disconnect WiFi as it's no longer needed
-  WiFi.disconnect(true);
-  WiFi.mode(WIFI_OFF);
+  wifiDisconnect();
+
 }

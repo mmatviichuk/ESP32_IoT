@@ -1,10 +1,13 @@
+//PIN Definition
 #define DHTTYPE DHT11   // DHT 11
 #define SD_CS 5
+////////////////
 
+//Configuration 
 #define DEBUG_SERIAL 1 
-
 #define REPEAT_CHECK 20000
 
+//Include section
 #include "FS.h"
 #include "SD.h"
 #include "SPI.h"
@@ -12,7 +15,9 @@
 #include <WiFi.h>
 #include <ArduinoJson.h>
 #include "time.h"
+#include "HTTPClient.h"
 
+//WiFi Config variables
 const char* filename = "/wifi.ini";
 struct Config {
   char ssid[64];
@@ -20,19 +25,21 @@ struct Config {
 };
 Config config;
 
+//Real time server configuration
 const char* ntpServer = "pool.ntp.org";
 const long  gmtOffset_sec = 14400;
 const int   daylightOffset_sec = 3600;
 char Date [10];
 char Time [10];
 
+//Variables
 int ledPin = 2;
-
+//
 uint8_t DHTPin = 4;
 float Temperature;
 float Humidity;
 DHT dht(DHTPin, DHTTYPE);
-
+//
 String dataMessage;
 
 #if (DEBUG_SERIAL == 1)
